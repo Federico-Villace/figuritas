@@ -1,49 +1,70 @@
 "use client";
 
 import { useState } from "react";
-import FiguitaPreview from "@/components/FiguitaPreview";
-import UploadForm from "@/components/UploadForm";
+import EmailStep from "@/components/EmailStep";
+import UserForm from "@/components/UserForm";
+import GeneratingStep from "@/components/GeneratingStep";
+import ResultStep from "@/components/ResultStep";
+import AlreadyGeneratedStep from "@/components/AlreadyGeneratedStep";
+import type { Step, UserData, GeneratedFiguritas } from "@/lib/types";
 
-export type FiguitaType = "seleccion" | "club";
-
-export interface FiguitaData {
-  type: FiguitaType;
-  playerName: string;
-  position: string;
-  number: string;
-  photoUrl: string | null;
-}
-
-const DEFAULT_DATA: FiguitaData = {
-  type: "seleccion",
-  playerName: "",
-  position: "",
-  number: "",
-  photoUrl: null,
-};
+export type { Step, UserData, GeneratedFiguritas } from "@/lib/types";
 
 export default function Home() {
-  const [data, setData] = useState<FiguitaData>(DEFAULT_DATA);
-  const [step, setStep] = useState<"form" | "preview">("form");
+  const [step, setStep] = useState<Step>("email");
+  const [userData, setUserData] = useState<UserData>({
+    email: "",
+    nombre: "",
+    apellido: "",
+    apodo: "",
+    barrio: "",
+    edad: "",
+    club: "",
+    photoFile: null,
+  });
+  const [figuritas, setFiguritas] = useState<GeneratedFiguritas | null>(null);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-sky-900 via-blue-800 to-yellow-500 flex flex-col items-center justify-center p-6">
-      <h1 className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-lg">
+    <main className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: "linear-gradient(135deg, #008f89 0%, #00B5AD 50%, #00d4cc 100%)" }}>
+      <h1 className="text-5xl font-black text-white mb-2 tracking-tight" style={{ textShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
         Figuritas 2026
       </h1>
-      <p className="text-sky-200 text-sm mb-8">
-        Selección &amp; Clubes de Hurlingham
-      </p>
+      <p className="text-white font-semibold text-sm mb-8 opacity-90">Selección &amp; Clubes de Hurlingham</p>
 
-      {step === "form" ? (
-        <UploadForm
-          data={data}
-          onChange={setData}
-          onNext={() => setStep("preview")}
+      {step === "email" && (
+        <EmailStep
+          onVerified={(email) => {
+            setUserData((d) => ({ ...d, email }));
+            setStep("form");
+          }}
+          onAlreadyGenerated={() => setStep("already-generated")}
         />
-      ) : (
-        <FiguitaPreview data={data} onBack={() => setStep("form")} />
       )}
+
+      {step === "form" && (
+        <UserForm
+          userData={userData}
+          onChange={(partial) => setUserData((d) => ({ ...d, ...partial }))}
+          onSubmit={() => setStep("generating")}
+        />
+      )}
+
+      {step === "generating" && (
+        <GeneratingStep
+          userData={userData}
+          onDone={(result) => {
+            setFiguritas(result);
+            setStep("result");
+          }}
+          onError={() => setStep("form")}
+        />
+      )}
+
+      {step === "result" && figuritas && (
+        <ResultStep figuritas={figuritas} userData={userData} />
+      )}
+
+      {step === "already-generated" && <AlreadyGeneratedStep />}
     </main>
   );
 }
