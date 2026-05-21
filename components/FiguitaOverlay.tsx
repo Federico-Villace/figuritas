@@ -30,7 +30,6 @@ export default function FiguitaOverlay({ photoUrl, userData, type }: Props) {
         style={{ width: "100%", display: "block" }}
       />
 
-      {/* Overlay sobre el área de datos del template */}
       <div
         style={{
           position: "absolute",
@@ -41,24 +40,45 @@ export default function FiguitaOverlay({ photoUrl, userData, type }: Props) {
           padding: "7px 10px 8px",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-          <div style={{ background: pillColor, borderRadius: 20, padding: "2px 12px" }}>
-            <span style={{
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              fontSize: 14, fontWeight: 600, color: "white", letterSpacing: 0.5,
-            }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 3,
+          }}
+        >
+          <div
+            style={{
+              background: pillColor,
+              borderRadius: 20,
+              padding: "2px 12px",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "white",
+                letterSpacing: 0.5,
+              }}
+            >
               {nombre}
             </span>
           </div>
-          <span style={{
-            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: 10, fontWeight: 300, color: "#4a5568",
-          }}>
+          <span
+            style={{
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+              fontSize: 10,
+              fontWeight: 300,
+              color: "#4a5568",
+            }}
+          >
             {nacimiento}&nbsp;|&nbsp;{userData.barrio}
           </span>
         </div>
 
-        {/* Club | Barrio */}
         <div
           style={{
             borderTop: "1px solid rgba(0,0,0,0.1)",
