@@ -31,15 +31,18 @@ function buildPrompt(params: {
   const nacimiento = new Date().getFullYear() - edad;
 
   return (
-    `La imagen adjunta es la foto de una persona real. ` +
-    `Creá una figurita estilo álbum Panini del Mundial 2026 usando EXACTAMENTE la cara y rasgos de esta persona. ` +
-    `NO uses la cara de ningún jugador famoso. La cara debe ser la de la persona de la foto.\n\n` +
-    `Estilo: fondo turquesa, número "26" grande en el fondo, foto del jugador en el centro, ` +
-    `barra oscura con el nombre abajo. Igual al diseño Panini FIFA World Cup 2026.\n\n` +
-    `Nombre: ${nombre.toUpperCase()}\n` +
-    `Camiseta: ${equipo}\n` +
-    `Equipo/Barrio: ${barrio.toUpperCase()}\n` +
-    `Año: ${nacimiento}`
+    `Tenés dos imágenes:\n` +
+    `- IMAGEN 1: una foto de una persona real.\n` +
+    `- IMAGEN 2: un template de figurita Panini con el espacio de la cara VACÍO.\n\n` +
+    `Tu tarea: colocá la cabeza de la persona de la IMAGEN 1 en el espacio vacío de la IMAGEN 2. ` +
+    `La cabeza debe encajar naturalmente dejando el cuello y la parte superior del pecho visibles — no cortés la imagen a la altura del mentón. ` +
+    `El cuello debe conectar naturalmente con el cuello de la camiseta del template. ` +
+    `Proporciones realistas: la cabeza no debe verse ni muy grande ni muy chica respecto a la camiseta. ` +
+    `Mantené el diseño del template exactamente igual. ` +
+    `IMPORTANTE: conservá el tono de piel exacto de la persona de la IMAGEN 1, sin mezclarlo ni teñirlo con los colores del fondo. ` +
+    `La piel debe verse natural y realista.\n\n` +
+    `NO agregues ningún texto, nombre, ni datos en la imagen. ` +
+    `Si el template tiene texto en la parte inferior, dejá esa área con el color de fondo sin texto.`
   );
 }
 
@@ -49,9 +52,9 @@ async function generateFigurita(
   templateData: { data: string; mimeType: string } | null,
   prompt: string
 ): Promise<string> {
-  // Solo la foto del usuario — el template confunde al modelo con Messi
   const parts: object[] = [
     { inlineData: { data: photoBase64, mimeType: photoMime } },
+    ...(templateData ? [{ inlineData: { data: templateData.data, mimeType: templateData.mimeType } }] : []),
     { text: prompt },
   ];
 
@@ -106,10 +109,11 @@ export async function POST(req: NextRequest) {
 
   const photoBuffer = Buffer.from(await photo.arrayBuffer());
   const photoBase64 = photoBuffer.toString("base64");
-  const template =
-    loadTemplate("panini-template.jpg") ??
-    loadTemplate("panini-template.png") ??
-    loadTemplate("panini-template.webp");
+
+  const argentinaTemplate =
+    loadTemplate("argentina.jpg") ?? loadTemplate("argentina.png") ?? loadTemplate("argentina.webp");
+  const clubTemplate =
+    loadTemplate("boca.jpg") ?? loadTemplate("boca.png") ?? loadTemplate("boca.webp");
 
   const displayName = apodo || `${nombre} ${apellido}`;
 
@@ -118,11 +122,11 @@ export async function POST(req: NextRequest) {
 
   try {
     seleccionUrl = await generateFigurita(
-      photoBase64, photo.type, template,
+      photoBase64, photo.type, argentinaTemplate,
       buildPrompt({ nombre: displayName, barrio, club, edad, type: "seleccion" })
     );
     clubUrl = await generateFigurita(
-      photoBase64, photo.type, template,
+      photoBase64, photo.type, clubTemplate,
       buildPrompt({ nombre: displayName, barrio, club, edad, type: "club" })
     );
   } catch (err) {

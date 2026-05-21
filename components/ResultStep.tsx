@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import type { GeneratedFiguritas, UserData } from "@/lib/types";
-import FiguitaCard from "@/components/FiguitaCard";
+import FiguitaOverlay from "@/components/FiguitaOverlay";
 
 interface Props {
   figuritas: GeneratedFiguritas;
@@ -12,6 +12,7 @@ interface Props {
 export default function ResultStep({ figuritas, userData }: Props) {
   const seleccionRef = useRef<HTMLDivElement>(null);
   const clubRef = useRef<HTMLDivElement>(null);
+  const slug = `${userData.apellido}-${userData.nombre}`.toLowerCase();
 
   async function download(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
     const { toPng } = await import("html-to-image");
@@ -23,8 +24,6 @@ export default function ResultStep({ figuritas, userData }: Props) {
     link.click();
   }
 
-  const slug = `${userData.apellido}-${userData.nombre}`.toLowerCase();
-
   return (
     <div className="flex flex-col items-center gap-6">
       <p className="text-white font-black text-2xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
@@ -34,7 +33,7 @@ export default function ResultStep({ figuritas, userData }: Props) {
       <div className="flex gap-8 flex-wrap justify-center">
         <div className="flex flex-col items-center gap-3">
           <div ref={seleccionRef}>
-            <FiguitaCard userData={userData} type="seleccion" photoUrl={figuritas.seleccion} />
+            <FiguitaOverlay photoUrl={figuritas.seleccion} userData={userData} type="seleccion" />
           </div>
           <button
             onClick={() => download(seleccionRef, `figurita-seleccion-${slug}.png`)}
@@ -46,7 +45,7 @@ export default function ResultStep({ figuritas, userData }: Props) {
 
         <div className="flex flex-col items-center gap-3">
           <div ref={clubRef}>
-            <FiguitaCard userData={userData} type="club" photoUrl={figuritas.club} />
+            <FiguitaOverlay photoUrl={figuritas.club} userData={userData} type="club" />
           </div>
           <button
             onClick={() => download(clubRef, `figurita-club-${slug}.png`)}

@@ -1,4 +1,5 @@
 export const CLUBS_HURLINGHAM = [
+  "Boca Juniors",
   "Club Atlético Hurlingham",
   "Hurlingham Club",
   "Club Social y Deportivo El Triángulo",
