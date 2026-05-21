@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { supabase } from "@/lib/supabase";
+import { normalizeTemplate, cropHeadAndNeck } from "@/lib/compose";
 import type { SupabaseUser } from "@/lib/supabase";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
@@ -108,12 +109,21 @@ export async function POST(req: NextRequest) {
   }
 
   const photoBuffer = Buffer.from(await photo.arrayBuffer());
-  const photoBase64 = photoBuffer.toString("base64");
 
-  const argentinaTemplate =
-    loadTemplate("argentina.jpg") ?? loadTemplate("argentina.png") ?? loadTemplate("argentina.webp");
-  const clubTemplate =
-    loadTemplate("boca.jpg") ?? loadTemplate("boca.png") ?? loadTemplate("boca.webp");
+  // Pre-procesar: recortar cabeza+cuello y normalizar templates al mismo tamaño
+  const [processedPhoto, argentinaRaw, bocaRaw] = await Promise.all([
+    cropHeadAndNeck(photoBuffer),
+    (async () => {
+      const t = loadTemplate("argentina.jpg") ?? loadTemplate("argentina.png") ?? loadTemplate("argentina.webp");
+      if (!t) return null;
+      return normalizeTemplate(Buffer.from(t.data, "base64"));
+    })(),
+    (async () => {
+      const t = loadTemplate("boca.jpg") ?? loadTemplate("boca.png") ?? loadTemplate("boca.webp");
+      if (!t) return null;
+      return normalizeTemplate(Buffer.from(t.data, "base64"));
+    })(),
+  ]);
 
   const displayName = apodo || `${nombre} ${apellido}`;
 
@@ -122,11 +132,11 @@ export async function POST(req: NextRequest) {
 
   try {
     seleccionUrl = await generateFigurita(
-      photoBase64, photo.type, argentinaTemplate,
+      processedPhoto.data, processedPhoto.mimeType, argentinaRaw,
       buildPrompt({ nombre: displayName, barrio, club, edad, type: "seleccion" })
     );
     clubUrl = await generateFigurita(
-      photoBase64, photo.type, clubTemplate,
+      processedPhoto.data, processedPhoto.mimeType, bocaRaw,
       buildPrompt({ nombre: displayName, barrio, club, edad, type: "club" })
     );
   } catch (err) {
