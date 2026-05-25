@@ -29,4 +29,7 @@ export interface SupabaseUser {
   club: string;
   generated: boolean;
   created_at: string;
+  figurita_seleccion_url: string | null;
+  figurita_club_url: string | null;
+  generated_at: string | null;
 }

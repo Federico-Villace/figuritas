@@ -18,6 +18,7 @@ export default function Home() {
     barrio: "", edad: "", club: "", photoFile: null,
   });
   const [figuritas, setFiguritas] = useState<GeneratedFiguritas | null>(null);
+  const [savedFiguritas, setSavedFiguritas] = useState<{ seleccion: string; club: string } | null>(null);
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center px-6 py-12">
@@ -52,7 +53,7 @@ export default function Home() {
         {step === "email" && (
           <EmailStep
             onVerified={(email) => { setUserData((d) => ({ ...d, email })); setStep("form"); }}
-            onAlreadyGenerated={() => setStep("already-generated")}
+            onAlreadyGenerated={(figs) => { setSavedFiguritas(figs); setStep("already-generated"); }}
           />
         )}
         {step === "form" && (
@@ -72,7 +73,7 @@ export default function Home() {
         {step === "result" && figuritas && (
           <ResultStep figuritas={figuritas} userData={userData} />
         )}
-        {step === "already-generated" && <AlreadyGeneratedStep />}
+        {step === "already-generated" && <AlreadyGeneratedStep figuritas={savedFiguritas} />}
 
         <p className="text-white/30 text-xs mt-8">#FiguitasHurlingham</p>
       </div>

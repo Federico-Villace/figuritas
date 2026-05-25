@@ -4,7 +4,7 @@ import { useState } from "react";
 
 interface Props {
   onVerified: (email: string) => void;
-  onAlreadyGenerated: () => void;
+  onAlreadyGenerated: (figuritas: { seleccion: string; club: string } | null) => void;
 }
 
 export default function EmailStep({ onVerified, onAlreadyGenerated }: Props) {
@@ -32,7 +32,7 @@ export default function EmailStep({ onVerified, onAlreadyGenerated }: Props) {
       }
 
       if (data.alreadyGenerated) {
-        onAlreadyGenerated();
+        onAlreadyGenerated(data.figuritas ?? null);
       } else {
         onVerified(email);
       }

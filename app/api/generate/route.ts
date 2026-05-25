@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { normalizeTemplate, cropHeadAndNeck } from "@/lib/compose";
 import { CLUBS_JERSEY_MAP } from "@/lib/clubs";
 import type { SupabaseUser } from "@/lib/supabase";
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
   const isTestUser = testEmails.includes(email.toLowerCase().trim());
 
   if (!isTestUser) {
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from("users").select("*")
       .eq("email", email.toLowerCase().trim())
       .maybeSingle();
@@ -197,12 +197,46 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isTestUser) {
-    const { error: insertError } = await supabase.from("users").upsert([{
-      email: email.toLowerCase().trim(),
-      nombre, apellido, apodo, barrio, edad, club, generated: true,
-    }]);
+    const emailSlug = email.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+
+    const uploadImage = async (dataUrl: string, name: string): Promise<string | null> => {
+      const [meta, base64] = dataUrl.split(",");
+      const mimeType = meta.split(":")[1].split(";")[0];
+      const ext = mimeType.split("/")[1];
+      const buffer = Buffer.from(base64, "base64");
+      const path = `${emailSlug}/${name}.${ext}`;
+      const { error } = await supabaseAdmin.storage
+        .from("figuritas")
+        .upload(path, buffer, { contentType: mimeType, upsert: true });
+      if (error) { console.error("Storage upload error:", error.message); return null; }
+      return supabaseAdmin.storage.from("figuritas").getPublicUrl(path).data.publicUrl;
+    };
+
+    let seleccionStoredUrl: string | null = null;
+    let clubStoredUrl: string | null = null;
+    try {
+      [seleccionStoredUrl, clubStoredUrl] = await Promise.all([
+        uploadImage(seleccionUrl, "seleccion"),
+        uploadImage(clubUrl, "club"),
+      ]);
+    } catch (storageErr) {
+      console.error("Storage upload failed:", storageErr);
+    }
+
+    const { error: insertError } = await supabaseAdmin.from("users").upsert(
+      [{
+        email: email.toLowerCase().trim(),
+        nombre, apellido, apodo, barrio, edad, club,
+        generated: true,
+        figurita_seleccion_url: seleccionStoredUrl,
+        figurita_club_url: clubStoredUrl,
+        generated_at: new Date().toISOString(),
+      }],
+      { onConflict: "email" }
+    );
     if (insertError) {
-      return NextResponse.json({ error: "Error al guardar el usuario" }, { status: 500 });
+      console.error("Supabase upsert error:", insertError);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
   }
 
