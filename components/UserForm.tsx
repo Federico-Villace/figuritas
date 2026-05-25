@@ -15,6 +15,7 @@ const labelClass = "text-[#008f89] text-xs font-bold mb-0.5 block";
 
 export default function UserForm({ userData, onChange, onSubmit }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const isValid =
     userData.nombre.trim() &&
@@ -69,17 +70,36 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
 
       <div>
         <label className={labelClass}>Foto de frente</label>
-        <div
-          onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 rounded-xl h-20 flex items-center justify-center cursor-pointer hover:border-[#00B5AD] transition-colors overflow-hidden"
-        >
-          {userData.photoFile ? (
+        {userData.photoFile ? (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="border-2 border-dashed border-gray-300 rounded-xl h-20 flex items-center justify-center cursor-pointer hover:border-[#00B5AD] transition-colors overflow-hidden"
+          >
             <img src={URL.createObjectURL(userData.photoFile)} alt="preview" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-gray-400 text-xs">Subí tu foto — cabeza y hombros, fondo liso</span>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="md:hidden flex-1 border-2 border-dashed border-gray-300 rounded-xl h-20 flex flex-col items-center justify-center gap-1 hover:border-[#00B5AD] transition-colors"
+            >
+              <span className="text-xl">📷</span>
+              <span className="text-gray-400 text-xs">Cámara</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex-1 border-2 border-dashed border-gray-300 rounded-xl h-20 flex flex-col items-center justify-center gap-1 hover:border-[#00B5AD] transition-colors"
+            >
+              <span className="text-xl">🖼️</span>
+              <span className="text-gray-400 text-xs">Galería</span>
+            </button>
+          </div>
+        )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => onChange({ photoFile: e.target.files?.[0] ?? null })} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden"
           onChange={(e) => onChange({ photoFile: e.target.files?.[0] ?? null })} />
       </div>
 
