@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { supabase } from "@/lib/supabase";
 import { normalizeTemplate, cropHeadAndNeck } from "@/lib/compose";
+import { CLUBS_JERSEY_MAP } from "@/lib/clubs";
 import type { SupabaseUser } from "@/lib/supabase";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
@@ -14,48 +15,93 @@ function loadTemplate(filename: string): { data: string; mimeType: string } | nu
   const buf = readFileSync(path);
   const ext = filename.split(".").pop() ?? "jpg";
   const mimeMap: Record<string, string> = { png: "image/png", webp: "image/webp", jpg: "image/jpeg", jpeg: "image/jpeg" };
-  return {
-    data: buf.toString("base64"),
-    mimeType: mimeMap[ext] ?? "image/jpeg",
-  };
+  return { data: buf.toString("base64"), mimeType: mimeMap[ext] ?? "image/jpeg" };
 }
 
-function buildPrompt(params: {
+function loadJersey(club: string): { data: string; mimeType: string } | null {
+  const jerseyNum = CLUBS_JERSEY_MAP[club] ?? 1;
+  return loadTemplate(`camisetas-hur/${jerseyNum}.png`);
+}
+
+interface UserParams {
   nombre: string;
+  apellido: string;
+  apodo: string;
   barrio: string;
-  club: string;
   edad: number;
-  type: "seleccion" | "club";
-}): string {
-  const { nombre, barrio, club, edad, type } = params;
-  const equipo = type === "seleccion" ? "Selección Argentina" : club;
-  const nacimiento = new Date().getFullYear() - edad;
+  club: string;
+}
+
+function buildPromptArgentina(p: UserParams): string {
+  const nacimiento = new Date().getFullYear() - p.edad;
+  const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
     `Tenés dos imágenes:\n` +
-    `- IMAGEN 1: una foto de una persona real.\n` +
-    `- IMAGEN 2: un template de figurita Panini con el espacio de la cara VACÍO.\n\n` +
-    `Tu tarea: colocá la cabeza de la persona de la IMAGEN 1 en el espacio vacío de la IMAGEN 2. ` +
-    `La cabeza debe encajar naturalmente dejando el cuello y la parte superior del pecho visibles — no cortés la imagen a la altura del mentón. ` +
-    `El cuello debe conectar naturalmente con el cuello de la camiseta del template. ` +
-    `Proporciones realistas: la cabeza no debe verse ni muy grande ni muy chica respecto a la camiseta. ` +
-    `Mantené el diseño del template exactamente igual. ` +
-    `IMPORTANTE: conservá el tono de piel exacto de la persona de la IMAGEN 1, sin mezclarlo ni teñirlo con los colores del fondo. ` +
-    `La piel debe verse natural y realista.\n\n` +
-    `NO agregues ningún texto, nombre, ni datos en la imagen. ` +
-    `Si el template tiene texto en la parte inferior, dejá esa área con el color de fondo sin texto.`
+    `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
+    `- IMAGEN 2: template de figurita del Mundial 2026. Tiene una camiseta celeste de la Selección Argentina ` +
+    `SIN cabeza, y una sección de datos en la parte inferior con textos de ejemplo.\n\n` +
+    `Tu tarea tiene DOS partes:\n` +
+    `PARTE 1 — Agregá la cabeza y el cuello de la persona de IMAGEN 1 sobre la camiseta de IMAGEN 2, ` +
+    `como si la persona la estuviera usando. Proporciones naturales: la cabeza debe ser grande respecto a la camiseta, ` +
+    `bien visible, con el cuello conectando de manera realista al cuello de la camiseta.\n` +
+    `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
+    `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
+    `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
+    `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
+    (p.apodo
+      ? `  · Donde dice "APODO" → escribí: ${p.apodo}\n`
+      : `  · El campo "APODO" dejalo con su color de fondo, sin texto.\n`) +
+    `\nReglas OBLIGATORIAS:\n` +
+    `- La cabeza debe ser grande y bien proporcionada con la camiseta — como una figurita Panini real.\n` +
+    `- Conservá el tono de piel EXACTO de la persona, sin teñirlo con ningún color del fondo.\n` +
+    `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
+    `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos) deben quedar EXACTAMENTE iguales al template — no los oscurezcas ni los cambies.\n` +
+    `- NO modifiques nada más: logos, diseño del template.`
+  );
+}
+
+function buildPromptHurlingham(p: UserParams): string {
+  const nacimiento = new Date().getFullYear() - p.edad;
+  const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
+
+  return (
+    `Tenés tres imágenes:\n` +
+    `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
+    `- IMAGEN 2: camiseta de fútbol del club "${p.club}".\n` +
+    `- IMAGEN 3: template de figurita del Mundial 2026 para clubes de Hurlingham. ` +
+    `Tiene un espacio blanco grande con forma orgánica/redondeada en el centro ` +
+    `y una sección de datos en la parte inferior con textos de ejemplo en gris.\n\n` +
+    `Tu tarea tiene DOS partes:\n` +
+    `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
+    `vistiendo la camiseta de IMAGEN 2. Encuadre de BUSTO: visible solo desde la cabeza hasta la cintura, ` +
+    `SIN mostrar brazos ni manos — como un recorte de carnet/figurita centrado en la parte superior del cuerpo.\n` +
+    `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
+    `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
+    `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
+    `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
+    `  · Donde dice "EQUIPO DONDE JUEGA" → escribí: ${p.club}\n` +
+    `\nReglas OBLIGATORIAS:\n` +
+    `- La figura (cabeza + torso) debe quedar DENTRO del espacio blanco orgánico, centrada, integrada naturalmente — sin bordes de recorte ni halos blancos visibles alrededor de la figura.\n` +
+    `- La figura debe llenar bien el espacio blanco: que sea grande, no pequeña ni flotando.\n` +
+    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: respetá colores, escudo y diseño.\n` +
+    `- Conservá el tono de piel EXACTO de la persona de IMAGEN 1.\n` +
+    `- La postura: erguida, mirando al frente. NO incluyas brazos ni manos en el recorte.\n` +
+    `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
+    `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos, las letras HUR) deben quedar EXACTAMENTE iguales al template.\n` +
+    `- NO modifiques nada más del template: logos FIFA, diseño general.`
   );
 }
 
 async function generateFigurita(
   photoBase64: string,
   photoMime: string,
-  templateData: { data: string; mimeType: string } | null,
+  templates: Array<{ data: string; mimeType: string }>,
   prompt: string
 ): Promise<string> {
   const parts: object[] = [
     { inlineData: { data: photoBase64, mimeType: photoMime } },
-    ...(templateData ? [{ inlineData: { data: templateData.data, mimeType: templateData.mimeType } }] : []),
+    ...templates.map((t) => ({ inlineData: { data: t.data, mimeType: t.mimeType } })),
     { text: prompt },
   ];
 
@@ -110,34 +156,39 @@ export async function POST(req: NextRequest) {
 
   const photoBuffer = Buffer.from(await photo.arrayBuffer());
 
-  // Pre-procesar: recortar cabeza+cuello y normalizar templates al mismo tamaño
-  const [processedPhoto, argentinaRaw, bocaRaw] = await Promise.all([
-    cropHeadAndNeck(photoBuffer),
-    (async () => {
-      const t = loadTemplate("argentina.jpg") ?? loadTemplate("argentina.png") ?? loadTemplate("argentina.webp");
-      if (!t) return null;
-      return normalizeTemplate(Buffer.from(t.data, "base64"));
-    })(),
-    (async () => {
-      const t = loadTemplate("boca.jpg") ?? loadTemplate("boca.png") ?? loadTemplate("boca.webp");
-      if (!t) return null;
-      return normalizeTemplate(Buffer.from(t.data, "base64"));
-    })(),
-  ]);
+  // Pre-procesar: normalizar foto y templates
+  const argentinaRaw = loadTemplate("argentina.png");
+  const hurlinghamRaw = loadTemplate("hurlingham.png");
+  const jerseyRaw = loadJersey(club);
 
-  const displayName = apodo || `${nombre} ${apellido}`;
+  const processedPhoto = await cropHeadAndNeck(photoBuffer);
+
+  const [argentinaTemplate, hurlinghamTemplate] = await Promise.all([
+    argentinaRaw ? normalizeTemplate(Buffer.from(argentinaRaw.data, "base64")) : Promise.resolve(null),
+    hurlinghamRaw ? normalizeTemplate(Buffer.from(hurlinghamRaw.data, "base64")) : Promise.resolve(null),
+  ]);
 
   let seleccionUrl: string;
   let clubUrl: string;
 
+  const userParams: UserParams = { nombre, apellido, apodo, barrio, edad, club };
+
   try {
     seleccionUrl = await generateFigurita(
-      processedPhoto.data, processedPhoto.mimeType, argentinaRaw,
-      buildPrompt({ nombre: displayName, barrio, club, edad, type: "seleccion" })
+      processedPhoto.data,
+      processedPhoto.mimeType,
+      argentinaTemplate ? [argentinaTemplate] : [],
+      buildPromptArgentina(userParams)
     );
+    const clubTemplates = [
+      ...(jerseyRaw ? [jerseyRaw] : []),
+      ...(hurlinghamTemplate ? [hurlinghamTemplate] : []),
+    ];
     clubUrl = await generateFigurita(
-      processedPhoto.data, processedPhoto.mimeType, bocaRaw,
-      buildPrompt({ nombre: displayName, barrio, club, edad, type: "club" })
+      processedPhoto.data,
+      processedPhoto.mimeType,
+      clubTemplates,
+      buildPromptHurlingham(userParams)
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

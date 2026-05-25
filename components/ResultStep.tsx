@@ -1,8 +1,6 @@
 "use client";
 
-import { useRef } from "react";
 import type { GeneratedFiguritas, UserData } from "@/lib/types";
-import FiguitaOverlay from "@/components/FiguitaOverlay";
 
 interface Props {
   figuritas: GeneratedFiguritas;
@@ -10,17 +8,12 @@ interface Props {
 }
 
 export default function ResultStep({ figuritas, userData }: Props) {
-  const seleccionRef = useRef<HTMLDivElement>(null);
-  const clubRef = useRef<HTMLDivElement>(null);
   const slug = `${userData.apellido}-${userData.nombre}`.toLowerCase();
 
-  async function download(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
-    const { toPng } = await import("html-to-image");
-    if (!ref.current) return;
-    const url = await toPng(ref.current, { pixelRatio: 3 });
+  function download(dataUrl: string, filename: string) {
     const link = document.createElement("a");
     link.download = filename;
-    link.href = url;
+    link.href = dataUrl;
     link.click();
   }
 
@@ -32,11 +25,13 @@ export default function ResultStep({ figuritas, userData }: Props) {
 
       <div className="flex gap-8 flex-wrap justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div ref={seleccionRef}>
-            <FiguitaOverlay photoUrl={figuritas.seleccion} userData={userData} type="seleccion" />
-          </div>
+          <img
+            src={figuritas.seleccion}
+            alt="Figurita Selección"
+            style={{ width: 280, borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.35)", display: "block" }}
+          />
           <button
-            onClick={() => download(seleccionRef, `figurita-seleccion-${slug}.png`)}
+            onClick={() => download(figuritas.seleccion, `figurita-seleccion-${slug}.png`)}
             className="px-6 py-2 rounded-xl bg-white text-[#00B5AD] font-black hover:bg-white/90 transition-all shadow-lg"
           >
             Descargar Selección
@@ -44,11 +39,13 @@ export default function ResultStep({ figuritas, userData }: Props) {
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <div ref={clubRef}>
-            <FiguitaOverlay photoUrl={figuritas.club} userData={userData} type="club" />
-          </div>
+          <img
+            src={figuritas.club}
+            alt="Figurita Club"
+            style={{ width: 280, borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.35)", display: "block" }}
+          />
           <button
-            onClick={() => download(clubRef, `figurita-club-${slug}.png`)}
+            onClick={() => download(figuritas.club, `figurita-club-${slug}.png`)}
             className="px-6 py-2 rounded-xl bg-white text-[#00B5AD] font-black hover:bg-white/90 transition-all shadow-lg"
           >
             Descargar Club
