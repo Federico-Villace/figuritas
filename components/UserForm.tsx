@@ -69,7 +69,7 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Foto de frente</label>
+        <label className={labelClass}>Foto de frente — de frente, mirando al lente, teléfono vertical</label>
         {userData.photoFile ? (
           <div
             onClick={() => fileRef.current?.click()}

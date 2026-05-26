@@ -15,9 +15,9 @@ export async function normalizeTemplate(buffer: Buffer): Promise<{ data: string;
 // Recorta la foto del usuario al área de cabeza+cuello (top 65%)
 // Así la IA sabe exactamente qué tiene que colocar y dónde termina
 export async function cropHeadAndNeck(buffer: Buffer): Promise<{ data: string; mimeType: string }> {
-  // Solo redimensiona sin recortar — la IA se encarga de posicionar la cabeza
   const resized = await sharp(buffer)
-    .resize(600, 800, { fit: "inside", withoutEnlargement: true })
+    .rotate() // aplica rotación EXIF automáticamente
+    .resize(600, 800, { fit: "cover", position: "attention" }) // centra en la región más relevante (cara)
     .jpeg({ quality: 95 })
     .toBuffer();
 
