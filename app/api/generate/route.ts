@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
-import { normalizeTemplate, cropHeadAndNeck } from "@/lib/compose";
+import { supabaseAdmin } from "@/lib/supabase";
+import { normalizeTemplate, cropHeadAndNeck, normalizeOutput } from "@/lib/compose";
 import { CLUBS_JERSEY_MAP } from "@/lib/clubs";
 import type { SupabaseUser } from "@/lib/supabase";
 
@@ -194,101 +194,118 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
   ]);
 
-  let seleccionUrl: string;
-  let clubUrl: string;
+  const userParams: UserParams = { nombre, apellido, apodo, barrio, edad, club };
 
-  const userParams: UserParams = {
-    nombre,
-    apellido,
-    apodo,
-    barrio,
-    edad,
-    club,
-  };
+  const enc = new TextEncoder();
 
-  try {
-    seleccionUrl = await generateFigurita(
-      processedPhoto.data,
-      processedPhoto.mimeType,
-      argentinaTemplate ? [argentinaTemplate] : [],
-      buildPromptArgentina(userParams),
-    );
-    const clubTemplates = [
-      ...(jerseyRaw ? [jerseyRaw] : []),
-      ...(hurlinghamTemplate ? [hurlinghamTemplate] : []),
-    ];
-    clubUrl = await generateFigurita(
-      processedPhoto.data,
-      processedPhoto.mimeType,
-      clubTemplates,
-      buildPromptHurlingham(userParams),
-    );
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("Gemini error:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const emit = (obj: object) =>
+        controller.enqueue(enc.encode(JSON.stringify(obj) + "\n"));
 
-  if (!isTestUser) {
-    const emailSlug = email
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]/g, "_");
+      let seleccionUrl: string;
+      let clubUrl: string;
 
-    const uploadImage = async (
-      dataUrl: string,
-      name: string,
-    ): Promise<string | null> => {
-      const [meta, base64] = dataUrl.split(",");
-      const mimeType = meta.split(":")[1].split(";")[0];
-      const ext = mimeType.split("/")[1];
-      const buffer = Buffer.from(base64, "base64");
-      const path = `${emailSlug}/${name}.${ext}`;
-      const { error } = await supabaseAdmin.storage
-        .from("figuritas")
-        .upload(path, buffer, { contentType: mimeType, upsert: true });
-      if (error) {
-        console.error("Storage upload error:", error.message);
-        return null;
+      try {
+        seleccionUrl = await normalizeOutput(
+          await generateFigurita(
+            processedPhoto.data,
+            processedPhoto.mimeType,
+            argentinaTemplate ? [argentinaTemplate] : [],
+            buildPromptArgentina(userParams),
+          ),
+        );
+        emit({ type: "seleccion", url: seleccionUrl });
+
+        const clubTemplates = [
+          ...(jerseyRaw ? [jerseyRaw] : []),
+          ...(hurlinghamTemplate ? [hurlinghamTemplate] : []),
+        ];
+        clubUrl = await normalizeOutput(
+          await generateFigurita(
+            processedPhoto.data,
+            processedPhoto.mimeType,
+            clubTemplates,
+            buildPromptHurlingham(userParams),
+          ),
+        );
+        emit({ type: "club", url: clubUrl });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("Gemini error:", msg);
+        emit({ type: "error", message: msg });
+        controller.close();
+        return;
       }
-      return supabaseAdmin.storage.from("figuritas").getPublicUrl(path).data
-        .publicUrl;
-    };
 
-    let seleccionStoredUrl: string | null = null;
-    let clubStoredUrl: string | null = null;
-    try {
-      [seleccionStoredUrl, clubStoredUrl] = await Promise.all([
-        uploadImage(seleccionUrl, "seleccion"),
-        uploadImage(clubUrl, "club"),
-      ]);
-    } catch (storageErr) {
-      console.error("Storage upload failed:", storageErr);
-    }
+      if (!isTestUser) {
+        const emailSlug = email
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]/g, "_");
 
-    const { error: insertError } = await supabaseAdmin.from("users").upsert(
-      [
-        {
-          email: email.toLowerCase().trim(),
-          nombre,
-          apellido,
-          apodo,
-          barrio,
-          edad,
-          club,
-          generated: true,
-          figurita_seleccion_url: seleccionStoredUrl,
-          figurita_club_url: clubStoredUrl,
-          generated_at: new Date().toISOString(),
-        },
-      ],
-      { onConflict: "email" },
-    );
-    if (insertError) {
-      console.error("Supabase upsert error:", insertError);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
-    }
-  }
+        const uploadImage = async (
+          dataUrl: string,
+          name: string,
+        ): Promise<string | null> => {
+          const [meta, base64] = dataUrl.split(",");
+          const mimeType = meta.split(":")[1].split(";")[0];
+          const ext = mimeType.split("/")[1];
+          const buffer = Buffer.from(base64, "base64");
+          const path = `${emailSlug}/${name}.${ext}`;
+          const { error } = await supabaseAdmin.storage
+            .from("figuritas")
+            .upload(path, buffer, { contentType: mimeType, upsert: true });
+          if (error) {
+            console.error("Storage upload error:", error.message);
+            return null;
+          }
+          return supabaseAdmin.storage.from("figuritas").getPublicUrl(path)
+            .data.publicUrl;
+        };
 
-  return NextResponse.json({ seleccion: seleccionUrl, club: clubUrl });
+        let seleccionStoredUrl: string | null = null;
+        let clubStoredUrl: string | null = null;
+        try {
+          [seleccionStoredUrl, clubStoredUrl] = await Promise.all([
+            uploadImage(seleccionUrl, "seleccion"),
+            uploadImage(clubUrl, "club"),
+          ]);
+        } catch (storageErr) {
+          console.error("Storage upload failed:", storageErr);
+        }
+
+        const { error: insertError } = await supabaseAdmin
+          .from("users")
+          .upsert(
+            [
+              {
+                email: email.toLowerCase().trim(),
+                nombre,
+                apellido,
+                apodo,
+                barrio,
+                edad,
+                club,
+                generated: true,
+                figurita_seleccion_url: seleccionStoredUrl,
+                figurita_club_url: clubStoredUrl,
+                generated_at: new Date().toISOString(),
+              },
+            ],
+            { onConflict: "email" },
+          );
+        if (insertError) {
+          console.error("Supabase upsert error:", insertError);
+        }
+      }
+
+      emit({ type: "done" });
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson" },
+  });
 }

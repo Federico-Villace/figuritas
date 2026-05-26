@@ -1,8 +1,17 @@
 import sharp from "sharp";
 
-// Dimensiones estándar para todos los templates
 const TEMPLATE_W = 900;
 const TEMPLATE_H = 1260;
+
+export async function normalizeOutput(dataUrl: string): Promise<string> {
+  const [meta, base64] = dataUrl.split(",");
+  const buffer = Buffer.from(base64, "base64");
+  const normalized = await sharp(buffer)
+    .resize(TEMPLATE_W, TEMPLATE_H, { fit: "fill" })
+    .png()
+    .toBuffer();
+  return `data:image/png;base64,${normalized.toString("base64")}`;
+}
 
 export async function normalizeTemplate(buffer: Buffer): Promise<{ data: string; mimeType: string }> {
   const normalized = await sharp(buffer)
