@@ -53,8 +53,8 @@ function buildPromptArgentina(p: UserParams): string {
     `SIN cabeza, y una sección de datos en la parte inferior con textos de ejemplo.\n\n` +
     `Tu tarea tiene DOS partes:\n` +
     `PARTE 1 — Agregá la cabeza y el cuello de la persona de IMAGEN 1 sobre la camiseta de IMAGEN 2, ` +
-    `como si la persona la estuviera usando. Proporciones naturales: la cabeza debe ser grande respecto a la camiseta, ` +
-    `bien visible, con el cuello conectando de manera realista al cuello de la camiseta.\n` +
+    `como si la persona la estuviera usando. La cabeza va POR ENCIMA y POR DELANTE del cuello de la camiseta — ` +
+    `nunca detrás de la tela. La cara debe quedar completamente visible en primer plano.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
@@ -67,6 +67,7 @@ function buildPromptArgentina(p: UserParams): string {
     `- NO modifiques la relación de aspecto de la cara — ni la estires, ni la ensanches, ni la aplastes. La cara debe mantener exactamente las proporciones del rostro original.\n` +
     `- Para centrar la cabeza, usá el escudo de la FIFA y las rayas del cuello de la camiseta como referencia: la cabeza debe quedar alineada sobre esas rayas, centrada respecto al escudo.\n` +
     `- Conservá el tono de piel EXACTO de la persona, sin teñirlo con ningún color del fondo.\n` +
+    `- NO modifiques ningún rasgo facial: ni la barba, ni el cabello, ni los ojos, ni la forma de la cara. La cara debe ser idéntica a IMAGEN 1.\n` +
     `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
     `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos) deben quedar EXACTAMENTE iguales al template — no los oscurezcas ni los cambies.\n` +
     `- NO modifiques nada más: logos, diseño del template.`
@@ -98,6 +99,7 @@ function buildPromptHurlingham(p: UserParams): string {
     `- La figura debe llenar bien el espacio blanco: que sea grande, no pequeña ni flotando.\n` +
     `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: respetá colores, escudo y diseño.\n` +
     `- Conservá el tono de piel EXACTO de la persona de IMAGEN 1.\n` +
+    `- NO modifiques ningún rasgo facial: ni la barba, ni el cabello, ni los ojos, ni la forma de la cara. La cara debe ser idéntica a IMAGEN 1.\n` +
     `- La postura: erguida, mirando al frente. Solo se ve cabeza, cuello y hombros — corte a la altura de los hombros.\n` +
     `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
     `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos, las letras HUR) deben quedar EXACTAMENTE iguales al template.\n` +
