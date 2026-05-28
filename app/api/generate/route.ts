@@ -90,8 +90,8 @@ function buildPromptHurlingham(p: UserParams): string {
     `y una sección de datos en la parte inferior con textos de ejemplo en gris.\n\n` +
     `Tu tarea tiene DOS partes:\n` +
     `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
-    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros. ` +
-    `La figura debe llenar bien el espacio blanco, centrada.\n` +
+    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo retrato: cabeza, cuello, hombros y busto hasta la altura del pecho — ` +
+    `que se vea bien la camiseta. La figura debe llenar bien el espacio blanco, centrada.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
