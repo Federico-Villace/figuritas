@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { supabaseAdmin } from "@/lib/supabase";
 import { normalizeTemplate, cropHeadAndNeck, normalizeOutput } from "@/lib/compose";
-import { CLUBS_JERSEY_MAP } from "@/lib/clubs";
+import { clubNameFromJersey } from "@/lib/clubs";
 import type { SupabaseUser } from "@/lib/supabase";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
@@ -28,9 +28,8 @@ function loadTemplate(
   };
 }
 
-function loadJersey(club: string): { data: string; mimeType: string } | null {
-  const jerseyNum = CLUBS_JERSEY_MAP[club] ?? 1;
-  return loadTemplate(`camisetas-hur/${jerseyNum}.png`);
+function loadJersey(jerseyFilename: string): { data: string; mimeType: string } | null {
+  return loadTemplate(`camisetas-hur/${jerseyFilename}`);
 }
 
 interface UserParams {
@@ -54,7 +53,9 @@ function buildPromptArgentina(p: UserParams): string {
     `Tu tarea tiene DOS partes:\n` +
     `PARTE 1 — Agregá la cabeza y el cuello de la persona de IMAGEN 1 sobre la camiseta de IMAGEN 2, ` +
     `como si la persona la estuviera usando. La cabeza va POR ENCIMA y POR DELANTE del cuello de la camiseta — ` +
-    `nunca detrás de la tela. La cara debe quedar completamente visible en primer plano.\n` +
+    `nunca detrás de la tela. La cara debe quedar completamente visible en primer plano. ` +
+    `IMPORTANTE: copiá la cabeza TAL CUAL aparece en IMAGEN 1, sin modificar sus proporciones — ` +
+    `la cabeza puede quedar más angosta que los hombros de la camiseta, eso es correcto y esperado.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
@@ -63,8 +64,10 @@ function buildPromptArgentina(p: UserParams): string {
       ? `  · Donde dice "APODO" → escribí: ${p.apodo}\n`
       : `  · El campo "APODO" dejalo con su color de fondo, sin texto.\n`) +
     `\nReglas OBLIGATORIAS:\n` +
+    `- CRÍTICO — PROPORCIÓN FACIAL: NO ensanches, NO aplastes, NO estires la cabeza en ninguna dirección. ` +
+    `Las proporciones del rostro deben ser IDÉNTICAS a IMAGEN 1. ` +
+    `El ancho de la cabeza NO debe igualarse al ancho de los hombros de la camiseta — eso sería un error.\n` +
     `- La cabeza debe ser grande y bien proporcionada con la camiseta — como una figurita Panini real.\n` +
-    `- NO modifiques la relación de aspecto de la cara — ni la estires, ni la ensanches, ni la aplastes. La cara debe mantener exactamente las proporciones del rostro original.\n` +
     `- Para centrar la cabeza, usá el escudo de la FIFA y las rayas del cuello de la camiseta como referencia: la cabeza debe quedar alineada sobre esas rayas, centrada respecto al escudo.\n` +
     `- Conservá el tono de piel EXACTO de la persona, sin teñirlo con ningún color del fondo.\n` +
     `- NO modifiques ningún rasgo facial: ni la barba, ni el cabello, ni los ojos, ni la forma de la cara. La cara debe ser idéntica a IMAGEN 1.\n` +
@@ -81,29 +84,27 @@ function buildPromptHurlingham(p: UserParams): string {
   return (
     `Tenés tres imágenes:\n` +
     `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
-    `- IMAGEN 2: camiseta de fútbol del club "${p.club}".\n` +
+    `- IMAGEN 2: camiseta de fútbol del club "${p.club}". Es ÚNICAMENTE una referencia de ropa — no copies ningún elemento de esta imagen al fondo ni al template.\n` +
     `- IMAGEN 3: template de figurita del Mundial 2026 para clubes de Hurlingham. ` +
-    `Tiene un espacio blanco grande con forma orgánica/redondeada en el centro ` +
+    `Tiene un espacio blanco con forma orgánica/redondeada en el centro ` +
     `y una sección de datos en la parte inferior con textos de ejemplo en gris.\n\n` +
     `Tu tarea tiene DOS partes:\n` +
     `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
-    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo retrato: visible solo la cabeza, el cuello y los hombros — ` +
-    `como una foto de documento o carnet. La imagen se corta a la altura de los hombros, no se ve el torso ni los brazos.\n` +
+    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros. ` +
+    `La figura debe llenar bien el espacio blanco, centrada.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
     `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
     `  · Donde dice "EQUIPO DONDE JUEGA" → escribí: ${p.club}\n` +
     `\nReglas OBLIGATORIAS:\n` +
-    `- La figura (cabeza + torso) debe quedar DENTRO del espacio blanco orgánico, centrada, integrada naturalmente — sin bordes de recorte ni halos blancos visibles alrededor de la figura.\n` +
-    `- La figura debe llenar bien el espacio blanco: que sea grande, no pequeña ni flotando.\n` +
-    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: respetá colores, escudo y diseño.\n` +
-    `- Conservá el tono de piel EXACTO de la persona de IMAGEN 1.\n` +
-    `- NO modifiques ningún rasgo facial: ni la barba, ni el cabello, ni los ojos, ni la forma de la cara. La cara debe ser idéntica a IMAGEN 1.\n` +
-    `- La postura: erguida, mirando al frente. Solo se ve cabeza, cuello y hombros — corte a la altura de los hombros.\n` +
+    `- CRÍTICO — TEMPLATE: el resultado final debe ser IMAGEN 3 con la persona agregada. ` +
+    `Los colores del fondo (teal, los números "26" decorativos, las letras HUR, logos FIFA) deben quedar EXACTAMENTE iguales a IMAGEN 3. No los toques.\n` +
+    `- La figura debe quedar DENTRO del espacio blanco orgánico, centrada, sin halos ni bordes visibles.\n` +
+    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: colores, escudo y diseño.\n` +
+    `- Conservá el tono de piel EXACTO de IMAGEN 1. NO modifiques ningún rasgo facial.\n` +
     `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
-    `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos, las letras HUR) deben quedar EXACTAMENTE iguales al template.\n` +
-    `- NO modifiques nada más del template: logos FIFA, diseño general.`
+    `- NO modifiques nada más del template.`
   );
 }
 
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
   ]);
 
-  const userParams: UserParams = { nombre, apellido, apodo, barrio, edad, club };
+  const userParams: UserParams = { nombre, apellido, apodo, barrio, edad, club: clubNameFromJersey(club) };
 
   const enc = new TextEncoder();
 

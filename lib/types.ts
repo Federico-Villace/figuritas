@@ -1,5 +1,3 @@
-import type { Club } from "./clubs";
-
 export type Step = "email" | "form" | "generating" | "result" | "already-generated";
 
 export interface UserData {
@@ -9,7 +7,7 @@ export interface UserData {
   apodo: string;
   barrio: string;
   edad: string;
-  club: Club | "";
+  club: string;
   photoFile: File | null;
 }
 

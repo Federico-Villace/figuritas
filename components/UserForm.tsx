@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { CLUBS_HURLINGHAM } from "@/lib/clubs";
+import { JERSEYS, jerseyLabel } from "@/lib/clubs";
 import type { UserData } from "@/lib/types";
 
 interface Props {
@@ -60,12 +60,22 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Club de barrio</label>
-        <select value={userData.club}
-          onChange={(e) => onChange({ club: e.target.value as UserData["club"] })} className={inputClass}>
-          <option value="" disabled>Elegí tu club</option>
-          {CLUBS_HURLINGHAM.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <label className={labelClass}>Camiseta</label>
+        <div className="flex gap-2 items-center">
+          <select value={userData.club}
+            onChange={(e) => onChange({ club: e.target.value })}
+            className={`${inputClass} flex-1`}>
+            <option value="" disabled>Elegí tu camiseta</option>
+            {JERSEYS.map((j) => <option key={j} value={j}>{jerseyLabel(j)}</option>)}
+          </select>
+          {userData.club && (
+            <img
+              src={`/templates/camisetas-hur/${encodeURIComponent(userData.club)}`}
+              alt="preview camiseta"
+              className="h-56 w-auto rounded-lg border border-gray-200 object-contain flex-shrink-0 bg-white"
+            />
+          )}
+        </div>
       </div>
 
       <div>
