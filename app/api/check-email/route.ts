@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { SupabaseUser } from "@/lib/types";
 
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     user.figurita_seleccion_url &&
     user.figurita_club_url &&
     user.generated_at &&
-    Date.now() - new Date(user.generated_at).getTime() < THREE_DAYS_MS
+    Date.now() - new Date(user.generated_at).getTime() < FIFTEEN_DAYS_MS
   ) {
     figuritas = {
       seleccion: user.figurita_seleccion_url,

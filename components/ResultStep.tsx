@@ -54,7 +54,7 @@ export default function ResultStep({ figuritas, userData }: Props) {
       </div>
 
       <p className="text-white/90 text-xs mt-2 bg-black/30 rounded-lg px-4 py-2">
-        Podés volver a descargarlas ingresando tu email durante los próximos <strong>3 días</strong>.
+        Podés volver a descargarlas ingresando tu email durante los próximos <strong>15 días</strong>.
       </p>
       <p className="text-white/50 text-xs">
         Compartí tus figuritas con el hashtag #FiguitasHurlingham

@@ -15,7 +15,7 @@ export default function Home() {
   const [step, setStep] = useState<Step>("email");
   const [userData, setUserData] = useState<UserData>({
     email: "", nombre: "", apellido: "", apodo: "",
-    barrio: "", edad: "", club: "", photoFile: null,
+    barrio: "", nacimiento: "", dni: "", club: "", photoFile: null,
   });
   const [figuritas, setFiguritas] = useState<GeneratedFiguritas | null>(null);
   const [savedFiguritas, setSavedFiguritas] = useState<{ seleccion: string; club: string } | null>(null);

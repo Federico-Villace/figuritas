@@ -6,7 +6,8 @@ export interface UserData {
   apellido: string;
   apodo: string;
   barrio: string;
-  edad: string;
+  nacimiento: string;
+  dni: string;
   club: string;
   photoFile: File | null;
 }
@@ -23,7 +24,8 @@ export interface SupabaseUser {
   apellido: string;
   apodo: string;
   barrio: string;
-  edad: number;
+  nacimiento: number;
+  dni: string | null;
   club: string;
   generated: boolean;
   created_at: string;

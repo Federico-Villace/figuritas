@@ -5,6 +5,7 @@ import { join } from "path";
 import { supabaseAdmin } from "@/lib/supabase";
 import { normalizeTemplate, cropHeadAndNeck, normalizeOutput } from "@/lib/compose";
 import { clubNameFromJersey } from "@/lib/clubs";
+import { sendFiguritasEmail } from "@/lib/email";
 import type { SupabaseUser } from "@/lib/supabase";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
@@ -37,12 +38,11 @@ interface UserParams {
   apellido: string;
   apodo: string;
   barrio: string;
-  edad: number;
+  nacimiento: number;
   club: string;
 }
 
 function buildPromptArgentina(p: UserParams): string {
-  const nacimiento = new Date().getFullYear() - p.edad;
   const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
@@ -58,7 +58,7 @@ function buildPromptArgentina(p: UserParams): string {
     `la cabeza puede quedar más angosta que los hombros de la camiseta, eso es correcto y esperado.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
-    `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
+    `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
     `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
     (p.apodo
       ? `  · Donde dice "APODO" → escribí: ${p.apodo}\n`
@@ -78,7 +78,6 @@ function buildPromptArgentina(p: UserParams): string {
 }
 
 function buildPromptHurlingham(p: UserParams): string {
-  const nacimiento = new Date().getFullYear() - p.edad;
   const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
@@ -94,7 +93,7 @@ function buildPromptHurlingham(p: UserParams): string {
     `que se vea bien la camiseta. La figura debe llenar bien el espacio blanco, centrada.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
-    `  · Donde dice "FECHA DE NAC" → escribí: ${nacimiento}\n` +
+    `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
     `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
     `  · Donde dice "EQUIPO DONDE JUEGA" → escribí: ${p.club}\n` +
     `\nReglas OBLIGATORIAS:\n` +
@@ -149,11 +148,12 @@ export async function POST(req: NextRequest) {
   const apellido = form.get("apellido") as string;
   const apodo = form.get("apodo") as string;
   const barrio = form.get("barrio") as string;
-  const edad = Number(form.get("edad"));
+  const nacimiento = Number(form.get("nacimiento"));
+  const dni = form.get("dni") as string;
   const club = form.get("club") as string;
   const photo = form.get("photo") as File;
 
-  if (!email || !nombre || !apellido || !barrio || !club || !photo) {
+  if (!email || !nombre || !apellido || !barrio || !nacimiento || !club || !photo) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
   ]);
 
-  const userParams: UserParams = { nombre, apellido, apodo, barrio, edad, club: clubNameFromJersey(club) };
+  const userParams: UserParams = { nombre, apellido, apodo, barrio, nacimiento, club: clubNameFromJersey(club) };
 
   const enc = new TextEncoder();
 
@@ -286,7 +286,8 @@ export async function POST(req: NextRequest) {
                 apellido,
                 apodo,
                 barrio,
-                edad,
+                nacimiento,
+                dni: dni || null,
                 club,
                 generated: true,
                 figurita_seleccion_url: seleccionStoredUrl,
@@ -299,6 +300,14 @@ export async function POST(req: NextRequest) {
         if (insertError) {
           console.error("Supabase upsert error:", insertError);
         }
+
+        await sendFiguritasEmail({
+          to: email,
+          nombre,
+          seleccionUrl: seleccionStoredUrl,
+          clubUrl: clubStoredUrl,
+          club: clubNameFromJersey(club),
+        });
       }
 
       emit({ type: "done" });

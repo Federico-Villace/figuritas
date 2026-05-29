@@ -21,7 +21,8 @@ export default function GeneratingStep({ userData, onDone, onError }: Props) {
         form.append("apellido", userData.apellido);
         form.append("apodo", userData.apodo);
         form.append("barrio", userData.barrio);
-        form.append("edad", userData.edad);
+        form.append("nacimiento", userData.nacimiento);
+        form.append("dni", userData.dni);
         form.append("club", userData.club);
         if (userData.photoFile) form.append("photo", userData.photoFile);
 

@@ -21,7 +21,8 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
     userData.nombre.trim() &&
     userData.apellido.trim() &&
     userData.barrio.trim() &&
-    userData.edad.trim() &&
+    userData.nacimiento.trim() &&
+    userData.dni.trim() &&
     userData.club &&
     userData.photoFile;
 
@@ -30,19 +31,19 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
       <div className="flex gap-2">
         <div className="flex-1">
           <label className={labelClass}>Nombre</label>
-          <input type="text" placeholder="Federico" value={userData.nombre}
+          <input type="text" placeholder="Juan" value={userData.nombre}
             onChange={(e) => onChange({ nombre: e.target.value })} className={inputClass} />
         </div>
         <div className="flex-1">
           <label className={labelClass}>Apellido</label>
-          <input type="text" placeholder="Villace" value={userData.apellido}
+          <input type="text" placeholder="Pérez" value={userData.apellido}
             onChange={(e) => onChange({ apellido: e.target.value })} className={inputClass} />
         </div>
       </div>
 
       <div>
         <label className={labelClass}>Apodo</label>
-        <input type="text" placeholder="El Negro, Pelusa, Chucky..." value={userData.apodo}
+        <input type="text" placeholder="La Pulga, El Pichichi, Chucky..." value={userData.apodo}
           onChange={(e) => onChange({ apodo: e.target.value.toUpperCase() })} className={inputClass} />
       </div>
 
@@ -52,11 +53,17 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
           <input type="text" placeholder="Villa Tesei" value={userData.barrio}
             onChange={(e) => onChange({ barrio: e.target.value })} className={inputClass} />
         </div>
-        <div className="w-20">
-          <label className={labelClass}>Edad</label>
-          <input type="number" min={5} max={99} placeholder="28" value={userData.edad}
-            onChange={(e) => onChange({ edad: e.target.value })} className={inputClass} />
+        <div className="w-24">
+          <label className={labelClass}>Año de nac.</label>
+          <input type="number" min={1920} max={2020} placeholder="1995" value={userData.nacimiento}
+            onChange={(e) => onChange({ nacimiento: e.target.value })} className={inputClass} />
         </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>DNI</label>
+        <input type="text" inputMode="numeric" placeholder="12345678" value={userData.dni}
+          onChange={(e) => onChange({ dni: e.target.value.replace(/\D/g, "") })} className={inputClass} />
       </div>
 
       <div>
