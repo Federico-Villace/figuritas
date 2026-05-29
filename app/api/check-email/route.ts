@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as dns } from "dns";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { SupabaseUser } from "@/lib/types";
 
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function isValidEmail(email: string): Promise<boolean> {
+  if (!EMAIL_REGEX.test(email)) return false;
+  const domain = email.split("@")[1];
+  try {
+    const records = await dns.resolveMx(domain);
+    return records.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+  }
+
+  const valid = await isValidEmail(email.trim().toLowerCase());
+  if (!valid) {
+    return NextResponse.json({ error: "El email no parece válido. Revisá que esté bien escrito." }, { status: 400 });
   }
 
   const testEmails = (process.env.TEST_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
