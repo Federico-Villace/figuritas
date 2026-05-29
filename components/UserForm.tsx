@@ -79,7 +79,18 @@ export default function UserForm({ userData, onChange, onSubmit }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Foto de frente — de frente, mirando al lente, teléfono vertical</label>
+        <label className={labelClass}>Tu foto</label>
+        <div className="bg-[#e6f7f7] border border-[#00B5AD]/30 rounded-xl p-3 mb-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <span className="text-[#007a75] font-semibold col-span-2 mb-0.5">Cómo tiene que ser la foto</span>
+          <span className="text-gray-700">✅ De frente, mirando al lente</span>
+          <span className="text-gray-700">✅ Teléfono vertical</span>
+          <span className="text-gray-700">✅ Fondo liso y despejado</span>
+          <span className="text-gray-700">✅ Buena iluminación</span>
+          <span className="text-gray-700">❌ Sin anteojos de sol</span>
+          <span className="text-gray-700">❌ Sin gorras ni sombreros</span>
+          <span className="text-gray-700">❌ Sin filtros ni stickers</span>
+          <span className="text-gray-700">❌ No foto de una foto</span>
+        </div>
         {userData.photoFile ? (
           <div
             onClick={() => fileRef.current?.click()}
