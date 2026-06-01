@@ -10,7 +10,7 @@ interface Props {
 
 export default function FiguitaOverlay({ photoUrl, userData, type }: Props) {
   const nombre = (userData.apodo || userData.nombre).toUpperCase();
-  const nacimiento = new Date().getFullYear() - Number(userData.edad);
+  const nacimiento = userData.nacimiento;
   const club = type === "seleccion" ? "Selección Argentina" : userData.club;
   const pillColor = type === "seleccion" ? "#1a3560" : "#0f3d22";
 

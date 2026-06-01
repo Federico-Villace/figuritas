@@ -33,6 +33,10 @@ function loadJersey(jerseyFilename: string): { data: string; mimeType: string } 
   return loadTemplate(`camisetas-hur/${jerseyFilename}`);
 }
 
+function loadArgentinaJersey(): { data: string; mimeType: string } | null {
+  return loadTemplate("camiseta-ar/argentina-t.png");
+}
+
 interface UserParams {
   nombre: string;
   apellido: string;
@@ -46,16 +50,16 @@ function buildPromptArgentina(p: UserParams): string {
   const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
-    `Tenés dos imágenes:\n` +
+    `Tenés tres imágenes:\n` +
     `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
-    `- IMAGEN 2: template de figurita del Mundial 2026. Tiene una camiseta celeste de la Selección Argentina ` +
-    `SIN cabeza, y una sección de datos en la parte inferior con textos de ejemplo.\n\n` +
+    `- IMAGEN 2: camiseta de la Selección Argentina. Es ÚNICAMENTE una referencia de ropa — no copies ningún elemento de esta imagen al fondo ni al template.\n` +
+    `- IMAGEN 3: template de figurita del Mundial 2026 para la Selección Argentina. ` +
+    `Tiene un espacio blanco con forma orgánica/redondeada en el centro ` +
+    `y una sección de datos en la parte inferior con textos de ejemplo.\n\n` +
     `Tu tarea tiene DOS partes:\n` +
-    `PARTE 1 — Agregá la cabeza y el cuello de la persona de IMAGEN 1 sobre la camiseta de IMAGEN 2, ` +
-    `como si la persona la estuviera usando. La cabeza va POR ENCIMA y POR DELANTE del cuello de la camiseta — ` +
-    `nunca detrás de la tela. La cara debe quedar completamente visible en primer plano. ` +
-    `IMPORTANTE: copiá la cabeza TAL CUAL aparece en IMAGEN 1, sin modificar sus proporciones — ` +
-    `la cabeza puede quedar más angosta que los hombros de la camiseta, eso es correcto y esperado.\n` +
+    `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
+    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros — ` +
+    `el corte es a la altura de las axilas, antes de que se vean los brazos. NO se ven brazos ni codos.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
@@ -64,16 +68,13 @@ function buildPromptArgentina(p: UserParams): string {
       ? `  · Donde dice "APODO" → escribí: ${p.apodo}\n`
       : `  · El campo "APODO" dejalo con su color de fondo, sin texto.\n`) +
     `\nReglas OBLIGATORIAS:\n` +
-    `- CRÍTICO — PROPORCIÓN FACIAL: NO ensanches, NO aplastes, NO estires la cabeza en ninguna dirección. ` +
-    `Las proporciones del rostro deben ser IDÉNTICAS a IMAGEN 1. ` +
-    `El ancho de la cabeza NO debe igualarse al ancho de los hombros de la camiseta — eso sería un error.\n` +
-    `- La cabeza debe ser grande y bien proporcionada con la camiseta — como una figurita Panini real.\n` +
-    `- Para centrar la cabeza, usá el escudo de la FIFA y las rayas del cuello de la camiseta como referencia: la cabeza debe quedar alineada sobre esas rayas, centrada respecto al escudo.\n` +
-    `- Conservá el tono de piel EXACTO de la persona, sin teñirlo con ningún color del fondo.\n` +
-    `- NO modifiques ningún rasgo facial: ni la barba, ni el cabello, ni los ojos, ni la forma de la cara. La cara debe ser idéntica a IMAGEN 1.\n` +
+    `- CRÍTICO — TEMPLATE: el resultado final debe ser IMAGEN 3 con la persona agregada. ` +
+    `Los colores del fondo (teal, los números "26" decorativos, logos FIFA, escudo AFA) deben quedar EXACTAMENTE iguales a IMAGEN 3. No los toques.\n` +
+    `- La figura debe quedar DENTRO del espacio blanco orgánico, centrada, sin halos ni bordes visibles.\n` +
+    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: colores, escudo y diseño.\n` +
+    `- Conservá el tono de piel EXACTO de IMAGEN 1. NO modifiques ningún rasgo facial.\n` +
     `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
-    `- CRÍTICO: los colores del fondo (teal, los números "26" decorativos) deben quedar EXACTAMENTE iguales al template — no los oscurezcas ni los cambies.\n` +
-    `- NO modifiques nada más: logos, diseño del template.`
+    `- NO modifiques nada más del template.`
   );
 }
 
@@ -89,8 +90,8 @@ function buildPromptHurlingham(p: UserParams): string {
     `y una sección de datos en la parte inferior con textos de ejemplo en gris.\n\n` +
     `Tu tarea tiene DOS partes:\n` +
     `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
-    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo retrato: cabeza, cuello, hombros y busto hasta la altura del pecho — ` +
-    `que se vea bien la camiseta. La figura debe llenar bien el espacio blanco, centrada.\n` +
+    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros — ` +
+    `el corte es a la altura de las axilas, antes de que se vean los brazos. NO se ven brazos ni codos.\n` +
     `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
     `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
     `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
@@ -183,6 +184,7 @@ export async function POST(req: NextRequest) {
   const argentinaRaw = loadTemplate("argentina.png");
   const hurlinghamRaw = loadTemplate("hurlingham.png");
   const jerseyRaw = loadJersey(club);
+  const argentinaJerseyRaw = loadArgentinaJersey();
 
   const processedPhoto = await cropHeadAndNeck(photoBuffer);
 
@@ -208,11 +210,15 @@ export async function POST(req: NextRequest) {
       let clubUrl: string;
 
       try {
+        const argentinaTemplates = [
+          ...(argentinaJerseyRaw ? [argentinaJerseyRaw] : []),
+          ...(argentinaTemplate ? [argentinaTemplate] : []),
+        ];
         seleccionUrl = await normalizeOutput(
           await generateFigurita(
             processedPhoto.data,
             processedPhoto.mimeType,
-            argentinaTemplate ? [argentinaTemplate] : [],
+            argentinaTemplates,
             buildPromptArgentina(userParams),
           ),
         );
