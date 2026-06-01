@@ -25,14 +25,14 @@ export default function Home() {
 
       {/* Fondo de pantalla */}
       <Image
-        src="/templates/fifa-26.webp"
+        src="/icon-source.jpeg"
         alt=""
         fill
         className="object-cover object-center"
         priority
       />
       {/* Capa semitransparente para que el contenido se lea bien */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/20" />
 
       {/* Contenido */}
       <div className="relative z-10 flex flex-col items-center w-full">

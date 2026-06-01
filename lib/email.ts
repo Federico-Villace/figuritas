@@ -83,7 +83,7 @@ export async function sendFiguritasEmail({
       },
       body: JSON.stringify({
         from: "Figuritas Hurlingham <onboarding@resend.dev>",
-        to,
+        to: process.env.NODE_ENV === "production" ? to : "federicovillace@gmail.com",
         subject: "¡Tus figuritas del Mundial 2026 están listas! 🎴",
         html,
       }),
