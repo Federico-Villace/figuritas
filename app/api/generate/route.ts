@@ -50,31 +50,27 @@ function buildPromptArgentina(p: UserParams): string {
   const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
-    `Tenés tres imágenes:\n` +
-    `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
-    `- IMAGEN 2: camiseta de la Selección Argentina. Es ÚNICAMENTE una referencia de ropa — no copies ningún elemento de esta imagen al fondo ni al template.\n` +
-    `- IMAGEN 3: template de figurita del Mundial 2026 para la Selección Argentina. ` +
-    `Tiene un espacio blanco con forma orgánica/redondeada en el centro ` +
-    `y una sección de datos en la parte inferior con textos de ejemplo.\n\n` +
-    `Tu tarea tiene DOS partes:\n` +
-    `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
-    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros — ` +
-    `el corte es a la altura de las axilas, antes de que se vean los brazos. NO se ven brazos ni codos.\n` +
-    `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
-    `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
-    `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
-    `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
+    `Tres imágenes:\n` +
+    `- IMAGEN 1: foto de una persona real.\n` +
+    `- IMAGEN 2: camiseta de la Selección Argentina. Solo referencia de ropa — no copies nada al fondo ni al template.\n` +
+    `- IMAGEN 3: template de figurita Mundial 2026 (Selección Argentina). Espacio blanco orgánico en el centro, sección de datos abajo.\n\n` +
+    `PARTE 1 — En el espacio blanco: la persona de IMAGEN 1 vistiendo la camiseta de IMAGEN 2. ` +
+    `Encuadre carnet: cabeza, cuello y hombros. Corte a nivel de axilas — sin brazos ni codos. ` +
+    `Si la camiseta es sin mangas, cortá justo al nivel de los hombros (sin axilas expuestas). ` +
+    `No deformés el template bajo ninguna circunstancia.\n\n` +
+    `PARTE 2 — Datos reales en la sección inferior:\n` +
+    `  · "NOMBRE Y APELLIDO" → ${nombreCompleto}\n` +
+    `  · "FECHA DE NAC" → ${p.nacimiento}\n` +
+    `  · "BARRIO" → ${p.barrio}\n` +
     (p.apodo
-      ? `  · Donde dice "APODO" → escribí: ${p.apodo}\n`
-      : `  · El campo "APODO" dejalo con su color de fondo, sin texto.\n`) +
-    `\nReglas OBLIGATORIAS:\n` +
-    `- CRÍTICO — TEMPLATE: el resultado final debe ser IMAGEN 3 con la persona agregada. ` +
-    `Los colores del fondo (teal, los números "26" decorativos, logos FIFA, escudo AFA) deben quedar EXACTAMENTE iguales a IMAGEN 3. No los toques.\n` +
-    `- La figura debe quedar DENTRO del espacio blanco orgánico, centrada, sin halos ni bordes visibles.\n` +
-    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: colores, escudo y diseño.\n` +
-    `- Conservá el tono de piel EXACTO de IMAGEN 1. NO modifiques ningún rasgo facial.\n` +
-    `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
-    `- NO modifiques nada más del template.`
+      ? `  · "APODO" → ${p.apodo}\n`
+      : `  · "APODO" → dejarlo con su color de fondo, sin texto\n`) +
+    `\nREGLAS:\n` +
+    `- TEMPLATE INTACTO: fondo teal, números "26", logos FIFA y escudo AFA igual que IMAGEN 3. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- Figura centrada dentro del espacio blanco, sin halos ni bordes.\n` +
+    `- Camiseta EXACTA de IMAGEN 2: colores, escudo y diseño fieles.\n` +
+    `- Tono de piel y rasgos de IMAGEN 1: sin ninguna modificación.\n` +
+    `- Tipografía de los datos: mismo estilo, color y tamaño que el template.`
   );
 }
 
@@ -82,29 +78,25 @@ function buildPromptHurlingham(p: UserParams): string {
   const nombreCompleto = `${p.nombre} ${p.apellido}`.trim();
 
   return (
-    `Tenés tres imágenes:\n` +
-    `- IMAGEN 1: foto de una persona real (cabeza y torso).\n` +
-    `- IMAGEN 2: camiseta de fútbol del club "${p.club}". Es ÚNICAMENTE una referencia de ropa — no copies ningún elemento de esta imagen al fondo ni al template.\n` +
-    `- IMAGEN 3: template de figurita del Mundial 2026 para clubes de Hurlingham. ` +
-    `Tiene un espacio blanco con forma orgánica/redondeada en el centro ` +
-    `y una sección de datos en la parte inferior con textos de ejemplo en gris.\n\n` +
-    `Tu tarea tiene DOS partes:\n` +
-    `PARTE 1 — Dentro del espacio blanco de IMAGEN 3, mostrá a la persona de IMAGEN 1 ` +
-    `vistiendo la camiseta de IMAGEN 2. Encuadre tipo carnet: cabeza, cuello y hombros — ` +
-    `el corte es a la altura de las axilas, antes de que se vean los brazos. NO se ven brazos ni codos.\n` +
-    `PARTE 2 — Completá la sección de datos de la parte inferior con estos valores reales:\n` +
-    `  · Donde dice "NOMBRE Y APELLIDO" → escribí: ${nombreCompleto}\n` +
-    `  · Donde dice "FECHA DE NAC" → escribí: ${p.nacimiento}\n` +
-    `  · Donde dice "BARRIO" → escribí: ${p.barrio}\n` +
-    `  · Donde dice "EQUIPO DONDE JUEGA" → escribí: ${p.club}\n` +
-    `\nReglas OBLIGATORIAS:\n` +
-    `- CRÍTICO — TEMPLATE: el resultado final debe ser IMAGEN 3 con la persona agregada. ` +
-    `Los colores del fondo (teal, los números "26" decorativos, las letras HUR, logos FIFA) deben quedar EXACTAMENTE iguales a IMAGEN 3. No los toques.\n` +
-    `- La figura debe quedar DENTRO del espacio blanco orgánico, centrada, sin halos ni bordes visibles.\n` +
-    `- Vestí a la persona con la camiseta EXACTA de IMAGEN 2: colores, escudo y diseño.\n` +
-    `- Conservá el tono de piel EXACTO de IMAGEN 1. NO modifiques ningún rasgo facial.\n` +
-    `- Usá el mismo estilo tipográfico del template para los datos (mismo color, mismo tamaño).\n` +
-    `- NO modifiques nada más del template.`
+    `Tres imágenes:\n` +
+    `- IMAGEN 1: foto de una persona real.\n` +
+    `- IMAGEN 2: camiseta del club "${p.club}". Solo referencia de ropa — no copies nada al fondo ni al template.\n` +
+    `- IMAGEN 3: template de figurita Mundial 2026 (clubes de Hurlingham). Espacio blanco orgánico en el centro, sección de datos abajo.\n\n` +
+    `PARTE 1 — En el espacio blanco: la persona de IMAGEN 1 vistiendo la camiseta de IMAGEN 2. ` +
+    `Encuadre carnet: cabeza, cuello y hombros. Corte a nivel de axilas — sin brazos ni codos. ` +
+    `Si la camiseta es sin mangas, cortá justo al nivel de los hombros (sin axilas expuestas). ` +
+    `No deformés el template bajo ninguna circunstancia.\n\n` +
+    `PARTE 2 — Datos reales en la sección inferior:\n` +
+    `  · "NOMBRE Y APELLIDO" → ${nombreCompleto}\n` +
+    `  · "FECHA DE NAC" → ${p.nacimiento}\n` +
+    `  · "BARRIO" → ${p.barrio}\n` +
+    `  · "EQUIPO DONDE JUEGA" → ${p.club}\n` +
+    `\nREGLAS:\n` +
+    `- TEMPLATE INTACTO: fondo teal, números "26", letras HUR y logos FIFA igual que IMAGEN 3. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- Figura centrada dentro del espacio blanco, sin halos ni bordes.\n` +
+    `- Camiseta EXACTA de IMAGEN 2: colores, escudo y diseño fieles.\n` +
+    `- Tono de piel y rasgos de IMAGEN 1: sin ninguna modificación.\n` +
+    `- Tipografía de los datos: mismo estilo, color y tamaño que el template.`
   );
 }
 
