@@ -66,7 +66,8 @@ function buildPromptArgentina(p: UserParams): string {
       ? `  · "APODO" → ${p.apodo}\n`
       : `  · "APODO" → dejarlo con su color de fondo, sin texto\n`) +
     `\nREGLAS:\n` +
-    `- TEMPLATE INTACTO: fondo teal, números "26", logos FIFA y escudo AFA igual que IMAGEN 3. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- TEMPLATE INTACTO: el resultado es IMAGEN 3 con la persona insertada. Fondo teal, logos FIFA y escudo AFA exactamente iguales. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- NÚMEROS "26" INTOCABLES: su color, forma y opacidad deben ser IDÉNTICOS a IMAGEN 3. No los modifiques bajo ningún concepto.\n` +
     `- Figura centrada dentro del espacio blanco, sin halos ni bordes.\n` +
     `- Camiseta EXACTA de IMAGEN 2: colores, escudo y diseño fieles.\n` +
     `- Tono de piel y rasgos de IMAGEN 1: sin ninguna modificación.\n` +
@@ -92,7 +93,8 @@ function buildPromptHurlingham(p: UserParams): string {
     `  · "BARRIO" → ${p.barrio}\n` +
     `  · "EQUIPO DONDE JUEGA" → ${p.club}\n` +
     `\nREGLAS:\n` +
-    `- TEMPLATE INTACTO: fondo teal, números "26", letras HUR y logos FIFA igual que IMAGEN 3. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- TEMPLATE INTACTO: el resultado es IMAGEN 3 con la persona insertada. Fondo teal, letras HUR y logos FIFA exactamente iguales. Solo cambia la persona en el óvalo y los textos de datos.\n` +
+    `- NÚMEROS "26" INTOCABLES: su color, forma y opacidad deben ser IDÉNTICOS a IMAGEN 3. No los modifiques bajo ningún concepto.\n` +
     `- Figura centrada dentro del espacio blanco, sin halos ni bordes.\n` +
     `- Camiseta EXACTA de IMAGEN 2: colores, escudo y diseño fieles.\n` +
     `- Tono de piel y rasgos de IMAGEN 1: sin ninguna modificación.\n` +
